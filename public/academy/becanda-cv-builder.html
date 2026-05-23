@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Becanda — Constructor de CV con IA</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(135deg, #e0f2fe, #f8fafc);
+      min-height: 100vh;
+      padding: 24px;
+      color: #0f172a;
+    }
+    .contenedor { max-width: 660px; margin: 0 auto; }
+    .tarjeta {
+      background: white;
+      padding: 36px;
+      border-radius: 28px;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+      margin-bottom: 24px;
+    }
+    h1 { font-size: 30px; color: #0284c7; margin-bottom: 8px; }
+    h2 { font-size: 17px; color: #0f172a; margin: 20px 0 10px; border-bottom: 2px solid #e0f2fe; padding-bottom: 6px; }
+    .subtitulo { color: #64748b; margin-bottom: 20px; font-size: 15px; }
+    label { display: block; font-size: 13px; color: #475569; margin-bottom: 4px; font-weight: bold; }
+    input, select, textarea {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      font-size: 14px;
+      background: #f8fafc;
+      margin-bottom: 12px;
+      font-family: inherit;
+      color: #0f172a;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #0284c7;
+    }
+    textarea { min-height: 80px; resize: vertical; }
+    .boton {
+      background: #0284c7;
+      color: white;
+      padding: 14px 24px;
+      border-radius: 16px;
+      border: none;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+    .boton:hover { background: #0369a1; }
+    .boton:disabled { background: #94a3b8; cursor: not-allowed; }
+    .boton-sec {
+      background: white;
+      color: #0284c7;
+      padding: 12px 24px;
+      border-radius: 16px;
+      border: 2px solid #0284c7;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+    .boton-sec:hover { background: #f0f9ff; }
+    .cv-resultado {
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.8;
+      color: #1e293b;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 20px;
+      max-height: 520px;
+      overflow-y: auto;
+    }
+    .alerta {
+      background: #fef3c7;
+      border: 1px solid #fbbf24;
+      border-radius: 12px;
+      padding: 14px 16px;
+      color: #92400e;
+      font-size: 14px;
+      margin-bottom: 18px;
+      line-height: 1.5;
+    }
+    .cargando-wrap { text-align: center; padding: 40px 20px; }
+    .spinner {
+      display: inline-block;
+      width: 36px;
+      height: 36px;
+      border: 3px solid #e2e8f0;
+      border-top-color: #0284c7;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .fila-btn { display: flex; gap: 10px; }
+    .fila-btn button { flex: 1; }
+    .nav-link {
+      display: inline-block;
+      margin-bottom: 16px;
+      color: #0284c7;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .badge-ok {
+      display: inline-block;
+      background: #dcfce7;
+      color: #166534;
+      border-radius: 999px;
+      padding: 3px 12px;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+    #pantalla-form, #pantalla-cargando, #pantalla-resultado { display: none; }
+  </style>
+</head>
+<body>
+<div class="contenedor">
+  <a href="/" class="nav-link">← Volver a Becanda</a>
+
+  <!-- PANTALLA 1: API Key -->
+  <div id="pantalla-apikey" class="tarjeta">
+    <h1>Constructor de CV con IA</h1>
+    <p class="subtitulo">Genera un currículum profesional adaptado a tu oportunidad objetivo.</p>
+
+    <div class="alerta">
+      <strong>Necesitas una API Key de Anthropic (gratuita para empezar)</strong><br>
+      1. Ve a <strong>console.anthropic.com</strong> → inicia sesión con tu email<br>
+      2. En el menú lateral, haz clic en <strong>"API Keys"</strong><br>
+      3. Crea una nueva clave y cópiala aquí<br><br>
+      Tu clave se guarda solo en <strong>este navegador</strong>, nunca en ningún servidor.
+    </div>
+
+    <label for="inp-key">API Key de Anthropic</label>
+    <input type="password" id="inp-key" placeholder="sk-ant-api03-..." />
+    <button class="boton" onclick="guardarKey()">Continuar</button>
+  </div>
+
+  <!-- PANTALLA 2: Formulario -->
+  <div id="pantalla-form" class="tarjeta">
+    <h1>Constructor de CV con IA</h1>
+    <span class="badge-ok">✓ API Key activa</span>
+
+    <h2>Datos personales</h2>
+    <label>Nombre completo *</label>
+    <input id="f-nombre" type="text" placeholder="Ana Torres García" />
+    <label>Email *</label>
+    <input id="f-email" type="email" placeholder="ana@email.com" />
+    <label>Teléfono</label>
+    <input id="f-telefono" type="tel" placeholder="+52 55 1234 5678" />
+    <label>Ciudad y País</label>
+    <input id="f-ciudad" type="text" placeholder="Ciudad de México, México" />
+
+    <h2>Perfil académico</h2>
+    <label>Carrera *</label>
+    <input id="f-carrera" type="text" placeholder="Ingeniería Industrial" />
+    <label>Universidad</label>
+    <input id="f-universidad" type="text" placeholder="Universidad Nacional Autónoma de México" />
+    <label>Promedio</label>
+    <input id="f-promedio" type="text" placeholder="9.2 / 10" />
+    <label>Nivel de inglés</label>
+    <select id="f-ingles">
+      <option value="">Selecciona</option>
+      <option>A1 - Básico inicial</option>
+      <option>A2 - Básico</option>
+      <option>B1 - Intermedio</option>
+      <option>B2 - Intermedio avanzado</option>
+      <option>C1 - Avanzado</option>
+      <option>C2 - Dominio profesional</option>
+    </select>
+
+    <h2>Tipo de oportunidad objetivo</h2>
+    <label>¿Para qué tipo de oportunidad es este CV?</label>
+    <select id="f-tipo">
+      <option value="beca académica">Beca académica</option>
+      <option value="intercambio estudiantil">Intercambio estudiantil</option>
+      <option value="prácticas profesionales">Prácticas profesionales</option>
+      <option value="programa de investigación">Programa de investigación</option>
+      <option value="concurso o competencia">Concurso o competencia</option>
+      <option value="hackathon">Hackathon</option>
+      <option value="certificación">Certificación</option>
+    </select>
+
+    <h2>Objetivo profesional</h2>
+    <label>¿Cuál es tu meta académica o profesional?</label>
+    <textarea id="f-objetivo" placeholder="Ej. Aplicar mis conocimientos en ingeniería para desarrollar soluciones sostenibles, fortalecer mi perfil internacional y contribuir a la innovación en manufactura."></textarea>
+
+    <h2>Formación adicional</h2>
+    <label>Cursos, certificaciones, talleres (uno por línea)</label>
+    <textarea id="f-educacion" placeholder="Certificación Google Analytics — 2024&#10;Taller de Innovación, TEC de Monterrey — 2023&#10;Python para datos, Coursera — 2023"></textarea>
+
+    <h2>Experiencia y proyectos</h2>
+    <label>Empleos, prácticas, proyectos académicos relevantes</label>
+    <textarea id="f-experiencia" placeholder="Proyecto de optimización logística — reducción del 18% en costos, 2024&#10;Voluntario en Cruz Roja — coordinación de eventos, 2022-2023&#10;Asistente de investigación, Lab. de Materiales UNAM — 2023"></textarea>
+
+    <h2>Habilidades</h2>
+    <label>Habilidades técnicas</label>
+    <textarea id="f-habilidades" placeholder="Python, MATLAB, SolidWorks, AutoCAD, Excel avanzado, análisis de datos"></textarea>
+    <label>Power Skills (habilidades blandas)</label>
+    <textarea id="f-powerskills" placeholder="Liderazgo de equipos, comunicación efectiva, pensamiento crítico, creatividad"></textarea>
+
+    <h2>Logros y reconocimientos</h2>
+    <label>Premios, menciones honoríficas, logros destacados</label>
+    <textarea id="f-logros" placeholder="1er lugar, Hackathon Nacional de Innovación 2023&#10;Beca de excelencia académica, 3 semestres consecutivos"></textarea>
+
+    <button class="boton" onclick="generarCV()">Generar CV con IA</button>
+    <button class="boton-sec" onclick="cambiarKey()">Cambiar API Key</button>
+  </div>
+
+  <!-- PANTALLA 3: Cargando -->
+  <div id="pantalla-cargando" class="tarjeta">
+    <div class="cargando-wrap">
+      <div class="spinner"></div>
+      <p style="font-size:16px; color:#475569;">Generando tu CV profesional...</p>
+      <p style="font-size:13px; color:#94a3b8; margin-top:8px;">Esto puede tomar 15–25 segundos</p>
+    </div>
+  </div>
+
+  <!-- PANTALLA 4: Resultado -->
+  <div id="pantalla-resultado" class="tarjeta">
+    <h1>Tu CV generado</h1>
+    <p class="subtitulo">Revisa el contenido, cópialo o descárgalo. Puedes editarlo antes de enviarlo.</p>
+    <pre id="cv-texto" class="cv-resultado"></pre>
+    <div class="fila-btn" style="margin-top:16px;">
+      <button class="boton" onclick="copiarCV()">Copiar</button>
+      <button class="boton-sec" onclick="descargarCV()">Descargar .txt</button>
+    </div>
+    <button class="boton-sec" onclick="volverForm()">Editar y regenerar</button>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'becanda_api_key'
+
+  function mostrar(id) {
+    ['pantalla-apikey','pantalla-form','pantalla-cargando','pantalla-resultado']
+      .forEach(p => document.getElementById(p).style.display = p === id ? 'block' : 'none')
+  }
+
+  window.onload = () => {
+    mostrar(localStorage.getItem(STORAGE_KEY) ? 'pantalla-form' : 'pantalla-apikey')
+  }
+
+  function guardarKey() {
+    const k = document.getElementById('inp-key').value.trim()
+    if (!k.startsWith('sk-ant-')) {
+      alert('La API Key debe comenzar con "sk-ant-". Revisa que la hayas copiado completa.')
+      return
+    }
+    localStorage.setItem(STORAGE_KEY, k)
+    mostrar('pantalla-form')
+  }
+
+  function cambiarKey() {
+    localStorage.removeItem(STORAGE_KEY)
+    mostrar('pantalla-apikey')
+  }
+
+  function volverForm() { mostrar('pantalla-form') }
+
+  async function generarCV() {
+    const apiKey = localStorage.getItem(STORAGE_KEY)
+    if (!apiKey) { cambiarKey(); return }
+
+    const g = id => document.getElementById(id).value || ''
+    const nombre = g('f-nombre') || 'No especificado'
+    const tipo   = g('f-tipo')   || 'oportunidad académica'
+
+    const prompt = `Eres un experto en redacción de CVs para estudiantes universitarios latinoamericanos que aplican a oportunidades académicas. Genera un CV profesional, completo y listo para usar.
+
+DATOS DEL CANDIDATO:
+- Nombre: ${nombre}
+- Email: ${g('f-email')}
+- Teléfono: ${g('f-telefono')}
+- Ciudad: ${g('f-ciudad')}
+- Carrera: ${g('f-carrera') || 'No especificado'}
+- Universidad: ${g('f-universidad')}
+- Promedio: ${g('f-promedio')}
+- Nivel de inglés: ${g('f-ingles')}
+
+TIPO DE OPORTUNIDAD OBJETIVO: ${tipo}
+
+OBJETIVO PROFESIONAL:
+${g('f-objetivo')}
+
+FORMACIÓN ADICIONAL (cursos, certificaciones):
+${g('f-educacion')}
+
+EXPERIENCIA Y PROYECTOS:
+${g('f-experiencia')}
+
+HABILIDADES TÉCNICAS:
+${g('f-habilidades')}
+
+HABILIDADES BLANDAS / POWER SKILLS:
+${g('f-powerskills')}
+
+LOGROS Y RECONOCIMIENTOS:
+${g('f-logros')}
+
+INSTRUCCIONES:
+1. Genera el CV completo en español con secciones claras y bien organizadas
+2. Adapta el orden y énfasis al tipo de oportunidad: ${tipo}
+3. Escribe un resumen/perfil profesional de 3 oraciones al inicio, poderoso y específico
+4. Si falta información en algún campo, usa frases apropiadas para un estudiante activo
+5. Usa formato de texto plano: secciones en MAYÚSCULAS, separadas por líneas de guiones (---------)
+6. El resultado debe poder copiarse directamente a un documento
+
+Genera el CV ahora:`
+
+    mostrar('pantalla-cargando')
+
+    try {
+      const texto = await llamarClaude(prompt)
+      document.getElementById('cv-texto').textContent = texto
+      mostrar('pantalla-resultado')
+    } catch (err) {
+      mostrar('pantalla-form')
+      alert('Error al generar el CV:\n' + err.message + '\n\nVerifica que tu API Key sea correcta y tenga créditos disponibles.')
+    }
+  }
+
+  async function llamarClaude(prompt) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': localStorage.getItem(STORAGE_KEY),
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    })
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}))
+      throw new Error(e.error?.message || `HTTP ${res.status}`)
+    }
+    const d = await res.json()
+    return d.content[0].text
+  }
+
+  function copiarCV() {
+    const texto = document.getElementById('cv-texto').textContent
+    navigator.clipboard.writeText(texto).then(() => {
+      const btn = event.target
+      btn.textContent = '¡Copiado!'
+      setTimeout(() => btn.textContent = 'Copiar', 2000)
+    })
+  }
+
+  function descargarCV() {
+    const texto = document.getElementById('cv-texto').textContent
+    const nombre = (document.getElementById('f-nombre').value || 'CV').replace(/\s+/g, '_')
+    const blob = new Blob([texto], { type: 'text/plain;charset=utf-8' })
+    const a = Object.assign(document.createElement('a'), {
+      href: URL.createObjectURL(blob),
+      download: `CV_${nombre}_Becanda.txt`
+    })
+    a.click()
+    URL.revokeObjectURL(a.href)
+  }
+</script>
+</body>
+</html>

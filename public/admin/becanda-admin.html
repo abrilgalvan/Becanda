@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Becanda — Admin Oportunidades</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f1f5f9;
+      min-height: 100vh;
+      padding: 24px;
+      color: #0f172a;
+    }
+    .page { max-width: 980px; margin: 0 auto; }
+    header {
+      background: white;
+      padding: 20px 28px;
+      border-radius: 18px;
+      box-shadow: 0 4px 20px rgba(15,23,42,0.08);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    header h1 { font-size: 22px; color: #0284c7; }
+    header .meta { font-size: 13px; color: #94a3b8; }
+    .tarjeta {
+      background: white;
+      padding: 28px;
+      border-radius: 18px;
+      box-shadow: 0 4px 20px rgba(15,23,42,0.08);
+      margin-bottom: 24px;
+    }
+    h2 { font-size: 17px; color: #0f172a; margin-bottom: 16px; }
+    h3 { font-size: 15px; color: #475569; margin-bottom: 10px; }
+    label { display: block; font-size: 13px; color: #475569; margin-bottom: 4px; font-weight: bold; }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 13px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 14px;
+      background: #f8fafc;
+      margin-bottom: 12px;
+      font-family: inherit;
+      color: #0f172a;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #0284c7; }
+    textarea { min-height: 72px; resize: vertical; }
+    .boton {
+      background: #0284c7;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: none;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .boton:hover { background: #0369a1; }
+    .boton:disabled { background: #94a3b8; cursor: not-allowed; }
+    .boton-sm {
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: none;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .boton-verde { background: #10b981; color: white; }
+    .boton-verde:hover { background: #059669; }
+    .boton-rojo { background: #ef4444; color: white; }
+    .boton-rojo:hover { background: #dc2626; }
+    .boton-gris { background: #e2e8f0; color: #475569; }
+    .boton-gris:hover { background: #cbd5e1; }
+    .boton-ia {
+      background: #7c3aed;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: none;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      margin-bottom: 8px;
+    }
+    .boton-ia:hover { background: #6d28d9; }
+    .alerta {
+      background: #fef3c7;
+      border: 1px solid #fbbf24;
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: #92400e;
+      font-size: 13px;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .exito {
+      background: #dcfce7;
+      border: 1px solid #86efac;
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: #166534;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+    .error-msg {
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: #991b1b;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+    .stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+    .stat-box {
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 12px;
+      padding: 14px 20px;
+      flex: 1;
+      min-width: 100px;
+      text-align: center;
+    }
+    .stat-num { font-size: 28px; font-weight: 800; color: #0284c7; }
+    .stat-lbl { font-size: 12px; color: #64748b; }
+
+    /* Tabla de oportunidades */
+    .tabla-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #f0f9ff; color: #0369a1; text-align: left; padding: 10px 14px; border-bottom: 2px solid #bae6fd; }
+    td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #475569; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8fafc; }
+    td.titulo-col { color: #0f172a; font-weight: bold; max-width: 200px; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+    .badge-beca { background: #dbeafe; color: #1d4ed8; }
+    .badge-practicas { background: #fce7f3; color: #9d174d; }
+    .badge-intercambio { background: #dcfce7; color: #166534; }
+    .badge-investigacion { background: #ede9fe; color: #5b21b6; }
+    .badge-concurso { background: #fef3c7; color: #92400e; }
+    .badge-hackathon { background: #fdf4ff; color: #7e22ce; }
+    .badge-default { background: #f1f5f9; color: #475569; }
+
+    /* Formulario lateral */
+    .panel-form { display: none; }
+    .panel-form.visible { display: block; }
+    .form-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .form-header h2 { margin: 0; }
+
+    /* IA extractor */
+    .ia-area {
+      background: #fdf4ff;
+      border: 1px solid #e9d5ff;
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+    .ia-area h3 { color: #7c3aed; margin-bottom: 8px; }
+    .ia-area p { font-size: 13px; color: #6b7280; margin-bottom: 10px; }
+    #inp-convocatoria { min-height: 100px; }
+
+    .spinner-sm {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #e9d5ff;
+      border-top-color: #7c3aed;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #0284c7;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: bold;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 999;
+    }
+    #toast.visible { opacity: 1; }
+  </style>
+</head>
+<body>
+<div id="toast"></div>
+<div class="page">
+
+  <!-- PANTALLA: Setup -->
+  <div id="pantalla-setup">
+    <div style="max-width:520px; margin:40px auto;">
+      <div class="tarjeta">
+        <h2>Becanda Admin — Configuración</h2>
+        <p style="font-size:14px; color:#64748b; margin-bottom:20px;">
+          Ingresa las credenciales para conectarte a tu base de datos de oportunidades.
+          Se guardan solo en esta sesión del navegador.
+        </p>
+
+        <div class="alerta">
+          <strong>¿Dónde encuentro estas credenciales?</strong><br>
+          • <strong>Supabase URL y Anon Key:</strong> supabase.com → tu proyecto → Settings → API<br>
+          • <strong>API Key de Anthropic:</strong> console.anthropic.com → API Keys
+        </div>
+
+        <label>Supabase URL</label>
+        <input id="s-url" type="text" placeholder="https://xxxxxxxxxxxx.supabase.co" />
+        <label>Supabase Anon Key</label>
+        <input id="s-anon" type="password" placeholder="eyJhbGciOiJIUzI1NiIsInR5..." />
+        <label>API Key de Anthropic (para extracción IA)</label>
+        <input id="s-ai" type="password" placeholder="sk-ant-api03-..." />
+
+        <button class="boton" onclick="conectar()" style="width:100%; margin-top:8px;">Conectar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA: Principal -->
+  <div id="pantalla-main" style="display:none;">
+    <header>
+      <div>
+        <h1>Becanda Admin — Oportunidades</h1>
+        <span class="meta" id="meta-conexion"></span>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button class="boton-sm boton-verde" onclick="abrirFormNuevo()">+ Nueva</button>
+        <button class="boton-sm boton-gris" onclick="cargarOportunidades()">↻ Recargar</button>
+        <button class="boton-sm boton-gris" onclick="desconectar()">Cerrar sesión</button>
+      </div>
+    </header>
+
+    <div class="stats">
+      <div class="stat-box">
+        <div class="stat-num" id="stat-total">–</div>
+        <div class="stat-lbl">Total</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-becas">–</div>
+        <div class="stat-lbl">Becas</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-practicas">–</div>
+        <div class="stat-lbl">Prácticas</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-otros">–</div>
+        <div class="stat-lbl">Otros</div>
+      </div>
+    </div>
+
+    <!-- Panel: form agregar/editar -->
+    <div id="panel-form" class="tarjeta panel-form">
+      <div class="form-header">
+        <h2 id="form-titulo">Nueva oportunidad</h2>
+        <button class="boton-sm boton-gris" onclick="cerrarForm()">Cerrar ✕</button>
+      </div>
+
+      <!-- Extractor IA -->
+      <div class="ia-area">
+        <h3>✨ Extracción con IA</h3>
+        <p>Pega el texto de una convocatoria y la IA llenará el formulario automáticamente.</p>
+        <label>Texto de la convocatoria</label>
+        <textarea id="inp-convocatoria" placeholder="Pega aquí el texto completo de la convocatoria (descripción, requisitos, fechas, enlace, etc.)"></textarea>
+        <button class="boton-ia" onclick="extraerConIA()">
+          <span id="ia-btn-txt">✨ Extraer datos con IA</span>
+        </button>
+      </div>
+
+      <!-- Formulario manual -->
+      <div id="msg-form"></div>
+      <input type="hidden" id="f-id" />
+
+      <div class="grid-2">
+        <div>
+          <label>Título *</label>
+          <input id="f-titulo" placeholder="Nombre de la beca o programa" />
+        </div>
+        <div>
+          <label>Tipo *</label>
+          <select id="f-tipo">
+            <option value="beca">Beca</option>
+            <option value="practicas">Prácticas</option>
+            <option value="certificacion">Certificación</option>
+            <option value="concurso">Concurso</option>
+            <option value="intercambio">Intercambio</option>
+            <option value="investigacion">Investigación</option>
+            <option value="microcredencial">Microcredencial</option>
+            <option value="hackathon">Hackathon</option>
+          </select>
+        </div>
+      </div>
+
+      <label>Descripción *</label>
+      <textarea id="f-descripcion" placeholder="Describe brevemente la oportunidad, requisitos, beneficios..."></textarea>
+
+      <div class="grid-2">
+        <div>
+          <label>País</label>
+          <input id="f-pais" placeholder="México, EE.UU., España, Internacional..." />
+        </div>
+        <div>
+          <label>Modalidad</label>
+          <select id="f-modalidad">
+            <option value="presencial">Presencial</option>
+            <option value="virtual">Virtual</option>
+            <option value="hibrida">Híbrida</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <label>Nivel de inglés requerido</label>
+          <select id="f-ingles">
+            <option value="">No especificado</option>
+            <option value="A1 - Básico inicial">A1 - Básico inicial</option>
+            <option value="A2 - Básico">A2 - Básico</option>
+            <option value="B1 - Intermedio">B1 - Intermedio</option>
+            <option value="B2 - Intermedio avanzado">B2 - Intermedio avanzado</option>
+            <option value="C1 - Avanzado">C1 - Avanzado</option>
+            <option value="C2 - Dominio profesional">C2 - Dominio profesional</option>
+          </select>
+        </div>
+        <div>
+          <label>Tags (separados por coma)</label>
+          <input id="f-tags" placeholder="IA, datos, sustentabilidad, liderazgo..." />
+        </div>
+      </div>
+
+      <label>Enlace oficial *</label>
+      <input id="f-link" type="url" placeholder="https://..." />
+
+      <div style="display:flex; gap:10px; margin-top:8px;">
+        <button class="boton" onclick="guardarOportunidad()" style="flex:1;">Guardar</button>
+        <button class="boton-sm boton-gris" onclick="limpiarForm()" style="padding:10px 16px;">Limpiar</button>
+      </div>
+    </div>
+
+    <!-- Tabla de oportunidades -->
+    <div class="tarjeta">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+        <h2 style="margin:0;">Oportunidades registradas</h2>
+        <input id="inp-filtro" type="text" placeholder="Buscar por título o país..."
+          style="width:220px; margin:0; padding:8px 12px;"
+          oninput="filtrarTabla()" />
+      </div>
+      <div id="msg-tabla"></div>
+      <div class="tabla-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Título</th>
+              <th>Tipo</th>
+              <th>País</th>
+              <th>Modalidad</th>
+              <th>Inglés</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-opps"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let sbClient = null
+  let aiKey = ''
+  let oportunidades = []
+  let modoEdicion = false
+
+  function mostrarPantalla(id) {
+    ['pantalla-setup','pantalla-main'].forEach(p => {
+      document.getElementById(p).style.display = p === id ? 'block' : 'none'
+    })
+  }
+
+  async function conectar() {
+    const url  = document.getElementById('s-url').value.trim()
+    const anon = document.getElementById('s-anon').value.trim()
+    aiKey      = document.getElementById('s-ai').value.trim()
+
+    if (!url || !anon) {
+      alert('Por favor completa al menos la URL y Anon Key de Supabase.')
+      return
+    }
+
+    try {
+      sbClient = supabase.createClient(url, anon)
+      const { error } = await sbClient.from('oportunidades').select('id').limit(1)
+      if (error) throw error
+      document.getElementById('meta-conexion').textContent = url.replace('https://','').split('.')[0]
+      mostrarPantalla('pantalla-main')
+      cargarOportunidades()
+    } catch (err) {
+      alert('Error al conectar:\n' + (err.message || err) + '\n\nVerifica la URL y la Anon Key.')
+    }
+  }
+
+  function desconectar() {
+    sbClient = null
+    aiKey = ''
+    oportunidades = []
+    mostrarPantalla('pantalla-setup')
+  }
+
+  async function cargarOportunidades() {
+    const msg = document.getElementById('msg-tabla')
+    msg.innerHTML = '<p style="color:#64748b; font-size:13px;">Cargando...</p>'
+
+    const { data, error } = await sbClient.from('oportunidades').select('*').order('id', { ascending: false })
+    if (error) {
+      msg.innerHTML = `<div class="error-msg">Error al cargar: ${error.message}</div>`
+      return
+    }
+
+    oportunidades = data || []
+    msg.innerHTML = ''
+    actualizarStats()
+    renderTabla(oportunidades)
+  }
+
+  function actualizarStats() {
+    document.getElementById('stat-total').textContent    = oportunidades.length
+    document.getElementById('stat-becas').textContent    = oportunidades.filter(o => o.tipo === 'beca').length
+    document.getElementById('stat-practicas').textContent = oportunidades.filter(o => o.tipo === 'practicas').length
+    document.getElementById('stat-otros').textContent    = oportunidades.filter(o => !['beca','practicas'].includes(o.tipo)).length
+  }
+
+  function renderTabla(data) {
+    const tbody = document.getElementById('tbody-opps')
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:24px;">Sin resultados</td></tr>'
+      return
+    }
+
+    tbody.innerHTML = data.map(o => `
+      <tr>
+        <td class="titulo-col">${escHtml(o.titulo || '—')}</td>
+        <td><span class="badge badge-${o.tipo || 'default'}">${o.tipo || '—'}</span></td>
+        <td>${escHtml(o.pais || '—')}</td>
+        <td>${o.modalidad || '—'}</td>
+        <td style="font-size:12px;">${o.nivel_ingles || '—'}</td>
+        <td>
+          <div style="display:flex; gap:6px;">
+            <button class="boton-sm boton-gris" onclick="editarOportunidad(${o.id})">Editar</button>
+            <button class="boton-sm boton-rojo" onclick="eliminarOportunidad(${o.id}, '${escHtml(o.titulo)}')">Eliminar</button>
+          </div>
+        </td>
+      </tr>
+    `).join('')
+  }
+
+  function filtrarTabla() {
+    const q = document.getElementById('inp-filtro').value.toLowerCase()
+    const filtrados = oportunidades.filter(o =>
+      (o.titulo || '').toLowerCase().includes(q) ||
+      (o.pais || '').toLowerCase().includes(q) ||
+      (o.tipo || '').toLowerCase().includes(q)
+    )
+    renderTabla(filtrados)
+  }
+
+  function abrirFormNuevo() {
+    modoEdicion = false
+    limpiarForm()
+    document.getElementById('form-titulo').textContent = 'Nueva oportunidad'
+    document.getElementById('panel-form').classList.add('visible')
+    document.getElementById('panel-form').scrollIntoView({ behavior: 'smooth' })
+  }
+
+  function cerrarForm() {
+    document.getElementById('panel-form').classList.remove('visible')
+  }
+
+  function limpiarForm() {
+    ['f-id','f-titulo','f-descripcion','f-pais','f-tags','f-link'].forEach(id => {
+      document.getElementById(id).value = ''
+    })
+    document.getElementById('f-tipo').value = 'beca'
+    document.getElementById('f-modalidad').value = 'presencial'
+    document.getElementById('f-ingles').value = ''
+    document.getElementById('inp-convocatoria').value = ''
+    document.getElementById('msg-form').innerHTML = ''
+  }
+
+  function editarOportunidad(id) {
+    const o = oportunidades.find(x => x.id === id)
+    if (!o) return
+    modoEdicion = true
+    document.getElementById('form-titulo').textContent = 'Editar oportunidad'
+    document.getElementById('f-id').value          = o.id
+    document.getElementById('f-titulo').value      = o.titulo || ''
+    document.getElementById('f-tipo').value        = o.tipo || 'beca'
+    document.getElementById('f-descripcion').value = o.descripcion || ''
+    document.getElementById('f-pais').value        = o.pais || ''
+    document.getElementById('f-modalidad').value   = o.modalidad || 'presencial'
+    document.getElementById('f-ingles').value      = o.nivel_ingles || ''
+    document.getElementById('f-tags').value        = o.tags || ''
+    document.getElementById('f-link').value        = o.link || ''
+    document.getElementById('msg-form').innerHTML  = ''
+    document.getElementById('panel-form').classList.add('visible')
+    document.getElementById('panel-form').scrollIntoView({ behavior: 'smooth' })
+  }
+
+  async function guardarOportunidad() {
+    const titulo = document.getElementById('f-titulo').value.trim()
+    const desc   = document.getElementById('f-descripcion').value.trim()
+    const link   = document.getElementById('f-link').value.trim()
+    const msgEl  = document.getElementById('msg-form')
+
+    if (!titulo || !desc) {
+      msgEl.innerHTML = '<div class="error-msg">El título y la descripción son obligatorios.</div>'
+      return
+    }
+
+    const datos = {
+      titulo,
+      tipo:        document.getElementById('f-tipo').value,
+      descripcion: desc,
+      pais:        document.getElementById('f-pais').value.trim(),
+      modalidad:   document.getElementById('f-modalidad').value,
+      nivel_ingles: document.getElementById('f-ingles').value,
+      tags:        document.getElementById('f-tags').value.trim(),
+      link:        link || null
+    }
+
+    const id = document.getElementById('f-id').value
+    let error
+
+    if (modoEdicion && id) {
+      ({ error } = await sbClient.from('oportunidades').update(datos).eq('id', parseInt(id)))
+    } else {
+      ({ error } = await sbClient.from('oportunidades').insert(datos))
+    }
+
+    if (error) {
+      msgEl.innerHTML = `<div class="error-msg">Error al guardar: ${error.message}<br><small>Si ves "permission denied", activa RLS o agrega una política de insert en Supabase.</small></div>`
+      return
+    }
+
+    mostrarToast(modoEdicion ? 'Oportunidad actualizada' : 'Oportunidad agregada')
+    cerrarForm()
+    cargarOportunidades()
+  }
+
+  async function eliminarOportunidad(id, titulo) {
+    if (!confirm(`¿Eliminar "${titulo}"?\nEsta acción no se puede deshacer.`)) return
+    const { error } = await sbClient.from('oportunidades').delete().eq('id', id)
+    if (error) {
+      alert('Error al eliminar: ' + error.message)
+      return
+    }
+    mostrarToast('Oportunidad eliminada')
+    cargarOportunidades()
+  }
+
+  async function extraerConIA() {
+    if (!aiKey) {
+      alert('Para usar la extracción con IA ingresa tu API Key de Anthropic en la pantalla de configuración.')
+      return
+    }
+
+    const texto = document.getElementById('inp-convocatoria').value.trim()
+    if (!texto) {
+      alert('Pega el texto de la convocatoria primero.')
+      return
+    }
+
+    const btnTxt = document.getElementById('ia-btn-txt')
+    btnTxt.innerHTML = '<span class="spinner-sm"></span> Extrayendo...'
+    document.querySelector('.boton-ia').disabled = true
+
+    const prompt = `Analiza el siguiente texto de una convocatoria o programa académico y extrae la información estructurada en formato JSON exactamente así:
+
+{
+  "titulo": "nombre completo del programa o beca",
+  "tipo": "beca|practicas|certificacion|concurso|intercambio|investigacion|microcredencial|hackathon",
+  "descripcion": "descripción breve y clara de máximo 3 oraciones",
+  "pais": "país o países donde se desarrolla (o 'Internacional' si aplica)",
+  "modalidad": "presencial|virtual|hibrida",
+  "nivel_ingles": "A1 - Básico inicial|A2 - Básico|B1 - Intermedio|B2 - Intermedio avanzado|C1 - Avanzado|C2 - Dominio profesional| (vacío si no se menciona)",
+  "tags": "palabras clave separadas por coma (máximo 6)",
+  "link": "URL oficial si aparece en el texto, o vacío"
+}
+
+Responde SOLO con el JSON, sin explicaciones adicionales.
+
+TEXTO DE LA CONVOCATORIA:
+${texto}`
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': aiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 800,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      })
+
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}))
+        throw new Error(e.error?.message || `HTTP ${res.status}`)
+      }
+
+      const data  = await res.json()
+      const texto = data.content[0].text
+      const match = texto.match(/\{[\s\S]*\}/)
+      if (!match) throw new Error('La IA no devolvió JSON válido.')
+
+      const obj = JSON.parse(match[0])
+
+      if (obj.titulo)        document.getElementById('f-titulo').value      = obj.titulo
+      if (obj.tipo)          document.getElementById('f-tipo').value        = obj.tipo
+      if (obj.descripcion)   document.getElementById('f-descripcion').value = obj.descripcion
+      if (obj.pais)          document.getElementById('f-pais').value        = obj.pais
+      if (obj.modalidad)     document.getElementById('f-modalidad').value   = obj.modalidad
+      if (obj.nivel_ingles)  document.getElementById('f-ingles').value      = obj.nivel_ingles
+      if (obj.tags)          document.getElementById('f-tags').value        = obj.tags
+      if (obj.link)          document.getElementById('f-link').value        = obj.link
+
+      mostrarToast('Datos extraídos — revisa y guarda')
+    } catch (err) {
+      alert('Error en la extracción IA:\n' + err.message)
+    } finally {
+      btnTxt.textContent = '✨ Extraer datos con IA'
+      document.querySelector('.boton-ia').disabled = false
+    }
+  }
+
+  function mostrarToast(msg) {
+    const t = document.getElementById('toast')
+    t.textContent = msg
+    t.classList.add('visible')
+    setTimeout(() => t.classList.remove('visible'), 3000)
+  }
+
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+  }
+</script>
+</body>
+</html>

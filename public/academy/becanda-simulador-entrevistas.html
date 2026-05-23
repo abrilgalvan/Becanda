@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Becanda — Simulador de Entrevistas</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(135deg, #e0f2fe, #f8fafc);
+      min-height: 100vh;
+      padding: 24px;
+      color: #0f172a;
+    }
+    .contenedor { max-width: 640px; margin: 0 auto; }
+    .tarjeta {
+      background: white;
+      padding: 32px;
+      border-radius: 28px;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+      margin-bottom: 24px;
+    }
+    h1 { font-size: 28px; color: #0284c7; margin-bottom: 8px; }
+    h2 { font-size: 16px; color: #0f172a; margin: 18px 0 8px; border-bottom: 2px solid #e0f2fe; padding-bottom: 5px; }
+    .subtitulo { color: #64748b; margin-bottom: 20px; font-size: 14px; }
+    label { display: block; font-size: 13px; color: #475569; margin-bottom: 4px; font-weight: bold; }
+    input, select, textarea {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      font-size: 14px;
+      background: #f8fafc;
+      margin-bottom: 12px;
+      font-family: inherit;
+      color: #0f172a;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #0284c7; }
+    textarea { min-height: 70px; resize: vertical; }
+    .boton {
+      background: #0284c7;
+      color: white;
+      padding: 13px 22px;
+      border-radius: 16px;
+      border: none;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+    .boton:hover { background: #0369a1; }
+    .boton:disabled { background: #94a3b8; cursor: not-allowed; }
+    .boton-sec {
+      background: white;
+      color: #0284c7;
+      padding: 11px 22px;
+      border-radius: 16px;
+      border: 2px solid #0284c7;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 8px;
+    }
+    .boton-sec:hover { background: #f0f9ff; }
+    .alerta {
+      background: #fef3c7;
+      border: 1px solid #fbbf24;
+      border-radius: 12px;
+      padding: 13px 16px;
+      color: #92400e;
+      font-size: 13px;
+      margin-bottom: 18px;
+      line-height: 1.5;
+    }
+    .badge-ok {
+      display: inline-block;
+      background: #dcfce7;
+      color: #166534;
+      border-radius: 999px;
+      padding: 3px 12px;
+      font-size: 12px;
+      margin-bottom: 14px;
+    }
+    .nav-link {
+      display: inline-block;
+      margin-bottom: 16px;
+      color: #0284c7;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    /* Entrevista */
+    .entrevista-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .entrevista-titulo { font-size: 18px; font-weight: bold; color: #0284c7; }
+    .progreso {
+      font-size: 13px;
+      color: #64748b;
+      background: #f0f9ff;
+      padding: 4px 12px;
+      border-radius: 999px;
+      border: 1px solid #bae6fd;
+    }
+    .btn-voz {
+      background: none;
+      border: 1px solid #cbd5e1;
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      color: #475569;
+    }
+    .btn-voz.activo { border-color: #0284c7; color: #0284c7; background: #f0f9ff; }
+
+    .chat-area {
+      height: 360px;
+      overflow-y: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 16px;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .burbuja {
+      max-width: 85%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .burbuja-ia {
+      background: #0284c7;
+      color: white;
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+    .burbuja-ia .feedback-chip {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 11px;
+      margin-bottom: 6px;
+    }
+    .burbuja-usuario {
+      background: white;
+      color: #0f172a;
+      border: 1px solid #cbd5e1;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+    .burbuja-cargando {
+      background: #e0f2fe;
+      color: #0369a1;
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+      font-style: italic;
+    }
+
+    .input-area { display: flex; gap: 8px; align-items: flex-end; }
+    .input-area textarea {
+      flex: 1;
+      margin: 0;
+      min-height: 50px;
+      max-height: 120px;
+      resize: none;
+      border-radius: 14px;
+    }
+    .btn-mic {
+      width: 46px;
+      height: 46px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      border: 2px solid #cbd5e1;
+      background: white;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .btn-mic:hover { border-color: #0284c7; background: #f0f9ff; }
+    .btn-mic.escuchando { border-color: #ef4444; background: #fef2f2; animation: pulso 1s infinite; }
+    .btn-enviar {
+      width: 46px;
+      height: 46px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      border: none;
+      background: #0284c7;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-enviar:hover { background: #0369a1; }
+    .btn-enviar:disabled { background: #94a3b8; cursor: not-allowed; }
+    @keyframes pulso { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+    .reporte-final {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-radius: 16px;
+      padding: 20px;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #1e293b;
+      white-space: pre-wrap;
+    }
+    .puntaje-total {
+      font-size: 36px;
+      font-weight: 800;
+      color: #0284c7;
+      text-align: center;
+      margin: 12px 0;
+    }
+
+    .spinner-dot { display: inline-block; animation: parpadeo 1s infinite; }
+    @keyframes parpadeo { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+    #pantalla-config, #pantalla-entrevista, #pantalla-reporte { display: none; }
+  </style>
+</head>
+<body>
+<div class="contenedor">
+  <a href="/" class="nav-link">← Volver a Becanda</a>
+
+  <!-- PANTALLA 1: API Key -->
+  <div id="pantalla-apikey" class="tarjeta">
+    <h1>Simulador de Entrevistas</h1>
+    <p class="subtitulo">Practica entrevistas para becas, prácticas, concursos o programas académicos. La IA te hace preguntas reales y te da retroalimentación.</p>
+
+    <div class="alerta">
+      <strong>Necesitas una API Key de Anthropic (gratuita para empezar)</strong><br>
+      1. Ve a <strong>console.anthropic.com</strong> → inicia sesión<br>
+      2. Haz clic en <strong>"API Keys"</strong> → Crear nueva clave<br>
+      3. Cópiala y pégala aquí<br><br>
+      Se guarda solo en tu navegador.
+    </div>
+
+    <label>API Key de Anthropic</label>
+    <input type="password" id="inp-key" placeholder="sk-ant-api03-..." />
+    <button class="boton" onclick="guardarKey()">Continuar</button>
+  </div>
+
+  <!-- PANTALLA 2: Configuración entrevista -->
+  <div id="pantalla-config" class="tarjeta">
+    <h1>Simulador de Entrevistas</h1>
+    <span class="badge-ok">✓ API Key activa</span>
+
+    <h2>Tipo de entrevista</h2>
+    <label>¿Para qué tipo de oportunidad quieres practicar?</label>
+    <select id="c-tipo">
+      <option value="beca académica">Beca académica</option>
+      <option value="intercambio estudiantil">Intercambio estudiantil</option>
+      <option value="prácticas profesionales">Prácticas profesionales</option>
+      <option value="programa de investigación">Programa de investigación</option>
+      <option value="concurso académico">Concurso académico</option>
+      <option value="hackathon">Hackathon</option>
+    </select>
+
+    <label>Dificultad</label>
+    <select id="c-dificultad">
+      <option value="básica (preguntas introductorias)">Básica — para primera vez</option>
+      <option value="intermedia (preguntas estándar de selección)">Intermedia — selección real</option>
+      <option value="avanzada (preguntas exigentes de programas competitivos)">Avanzada — programas competitivos</option>
+    </select>
+
+    <h2>Tu perfil</h2>
+    <label>Nombre</label>
+    <input id="c-nombre" type="text" placeholder="Ana Torres" />
+    <label>Carrera</label>
+    <input id="c-carrera" type="text" placeholder="Ingeniería Industrial" />
+    <label>¿A qué oportunidad específica quieres aplicar? (opcional)</label>
+    <input id="c-oportunidad" type="text" placeholder="Ej. Beca Fulbright, Intercambio MIT, Práctica en Google..." />
+    <label>¿Cuál es tu motivación o meta principal?</label>
+    <textarea id="c-objetivo" placeholder="Ej. Desarrollar habilidades en inteligencia artificial, viajar y conocer otras culturas, fortalecer mi perfil para un posgrado..."></textarea>
+
+    <h2>Opciones de voz</h2>
+    <label>
+      <input type="checkbox" id="c-vozcheck" checked style="width:auto; margin-right:8px; margin-bottom:0;">
+      Leer las preguntas en voz alta (requiere altavoces)
+    </label>
+
+    <button class="boton" onclick="iniciarEntrevista()" style="margin-top:16px;">Comenzar entrevista</button>
+    <button class="boton-sec" onclick="cambiarKey()">Cambiar API Key</button>
+  </div>
+
+  <!-- PANTALLA 3: Entrevista activa -->
+  <div id="pantalla-entrevista" class="tarjeta">
+    <div class="entrevista-header">
+      <span class="entrevista-titulo" id="titulo-entrevista">Entrevista</span>
+      <span class="progreso" id="txt-progreso">Pregunta 0 / 6</span>
+      <button class="btn-voz" id="btn-voz-toggle" onclick="toggleVoz()">🔊 Voz</button>
+    </div>
+
+    <div class="chat-area" id="chat"></div>
+
+    <div class="input-area">
+      <textarea id="inp-respuesta" placeholder="Escribe tu respuesta aquí..." onkeydown="enterEnvia(event)"></textarea>
+      <button class="btn-mic" id="btn-mic" onclick="toggleMic()" title="Hablar (solo Chrome/Edge)">🎤</button>
+      <button class="btn-enviar" id="btn-enviar" onclick="enviarRespuesta()">➤</button>
+    </div>
+    <p style="font-size:11px; color:#94a3b8; margin-top:8px; text-align:center;">
+      Presiona Enter para enviar · El micrófono funciona en Chrome y Edge
+    </p>
+  </div>
+
+  <!-- PANTALLA 4: Reporte final -->
+  <div id="pantalla-reporte" class="tarjeta">
+    <h1>Reporte de tu entrevista</h1>
+    <div class="puntaje-total" id="puntaje-display"></div>
+    <pre id="reporte-texto" class="reporte-final"></pre>
+    <button class="boton" onclick="nuevaEntrevista()" style="margin-top:16px;">Nueva entrevista</button>
+    <button class="boton-sec" onclick="volverConfig()">Cambiar configuración</button>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'becanda_api_key'
+  let vozActiva = true
+  let mensajes = []
+  let preguntaActual = 0
+  const TOTAL_PREGUNTAS = 6
+  let escuchando = false
+  let recognition = null
+
+  function mostrar(id) {
+    ['pantalla-apikey','pantalla-config','pantalla-entrevista','pantalla-reporte']
+      .forEach(p => document.getElementById(p).style.display = p === id ? 'block' : 'none')
+  }
+
+  window.onload = () => {
+    mostrar(localStorage.getItem(STORAGE_KEY) ? 'pantalla-config' : 'pantalla-apikey')
+  }
+
+  function guardarKey() {
+    const k = document.getElementById('inp-key').value.trim()
+    if (!k.startsWith('sk-ant-')) {
+      alert('La API Key debe comenzar con "sk-ant-". Cópiala completa desde console.anthropic.com')
+      return
+    }
+    localStorage.setItem(STORAGE_KEY, k)
+    mostrar('pantalla-config')
+  }
+
+  function cambiarKey() {
+    localStorage.removeItem(STORAGE_KEY)
+    mostrar('pantalla-apikey')
+  }
+
+  function volverConfig() { mostrar('pantalla-config') }
+
+  function nuevaEntrevista() {
+    mensajes = []
+    preguntaActual = 0
+    document.getElementById('chat').innerHTML = ''
+    mostrar('pantalla-config')
+  }
+
+  function toggleVoz() {
+    vozActiva = !vozActiva
+    const btn = document.getElementById('btn-voz-toggle')
+    btn.textContent = vozActiva ? '🔊 Voz' : '🔇 Silencio'
+    btn.className = vozActiva ? 'btn-voz activo' : 'btn-voz'
+    if (!vozActiva) window.speechSynthesis?.cancel()
+  }
+
+  function leer(texto) {
+    if (!vozActiva || !window.speechSynthesis) return
+    window.speechSynthesis.cancel()
+    const u = new SpeechSynthesisUtterance(texto)
+    u.lang = 'es-MX'
+    u.rate = 0.92
+    window.speechSynthesis.speak(u)
+  }
+
+  function agregarBurbuja(tipo, html) {
+    const chat = document.getElementById('chat')
+    const div = document.createElement('div')
+    div.className = 'burbuja burbuja-' + tipo
+    div.innerHTML = html
+    chat.appendChild(div)
+    chat.scrollTop = chat.scrollHeight
+    return div
+  }
+
+  function enterEnvia(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      enviarRespuesta()
+    }
+  }
+
+  async function iniciarEntrevista() {
+    const tipo       = document.getElementById('c-tipo').value
+    const dificultad = document.getElementById('c-dificultad').value
+    const nombre     = document.getElementById('c-nombre').value || 'el candidato'
+    const carrera    = document.getElementById('c-carrera').value || 'no especificada'
+    const oportunidad = document.getElementById('c-oportunidad').value
+    const objetivo   = document.getElementById('c-objetivo').value
+
+    vozActiva = document.getElementById('c-vozcheck').checked
+    const btn = document.getElementById('btn-voz-toggle')
+    btn.textContent = vozActiva ? '🔊 Voz' : '🔇 Silencio'
+    btn.className = vozActiva ? 'btn-voz activo' : 'btn-voz'
+
+    mensajes = []
+    preguntaActual = 0
+    document.getElementById('chat').innerHTML = ''
+    document.getElementById('titulo-entrevista').textContent = tipo.charAt(0).toUpperCase() + tipo.slice(1)
+    document.getElementById('txt-progreso').textContent = `Pregunta 0 / ${TOTAL_PREGUNTAS}`
+
+    mostrar('pantalla-entrevista')
+
+    const sistemaPrompt = `Eres Becanda IA, un entrevistador experto para ${tipo} en instituciones reconocidas de América Latina y el mundo.
+
+PERFIL DEL CANDIDATO:
+- Nombre: ${nombre}
+- Carrera: ${carrera}
+${oportunidad ? `- Oportunidad específica: ${oportunidad}` : ''}
+${objetivo ? `- Motivación y objetivo: ${objetivo}` : ''}
+
+MISIÓN: Conduce una entrevista real de dificultad ${dificultad} con exactamente ${TOTAL_PREGUNTAS} preguntas. Evalúa: motivación, experiencia, valores, metas, aptitud.
+
+FORMATO OBLIGATORIO (úsalo en cada respuesta):
+FEEDBACK: [en el primer mensaje escribe solo "¡Listo para comenzar!"]
+PUNTOS: [0 en el primer mensaje, luego del 1 al 5 por respuesta]
+PREGUNTA: [tu pregunta — o "FIN" después de la pregunta ${TOTAL_PREGUNTAS}]
+REPORTE: [SOLO cuando PREGUNTA sea FIN: incluye puntaje total sobre ${TOTAL_PREGUNTAS * 5}, fortalezas observadas, áreas de mejora y una recomendación concreta]`
+
+    mensajes.push({ role: 'user', content: 'Comencemos la entrevista.' })
+
+    const burl = agregarBurbuja('cargando', '<span class="spinner-dot">...</span>')
+    try {
+      const respuesta = await llamarClaude(sistemaPrompt, mensajes)
+      burl.remove()
+      procesarRespuestaIA(respuesta)
+    } catch (err) {
+      burl.remove()
+      agregarBurbuja('ia', '⚠️ Error: ' + err.message)
+    }
+  }
+
+  function procesarRespuestaIA(texto) {
+    mensajes.push({ role: 'assistant', content: texto })
+
+    const feedback  = extraer(texto, 'FEEDBACK')
+    const puntos    = extraer(texto, 'PUNTOS')
+    const pregunta  = extraer(texto, 'PREGUNTA')
+    const reporte   = extraer(texto, 'REPORTE')
+
+    if (pregunta === 'FIN' || reporte) {
+      let totalPts = 0
+      mensajes.filter(m => m.role === 'assistant').forEach(m => {
+        const p = parseInt(extraer(m.content, 'PUNTOS')) || 0
+        totalPts += p
+      })
+      const pctj = Math.round((totalPts / (TOTAL_PREGUNTAS * 5)) * 100)
+      document.getElementById('puntaje-display').textContent = pctj + ' / 100'
+      document.getElementById('reporte-texto').textContent = reporte || texto
+      mostrar('pantalla-reporte')
+      return
+    }
+
+    preguntaActual++
+    document.getElementById('txt-progreso').textContent = `Pregunta ${preguntaActual} / ${TOTAL_PREGUNTAS}`
+
+    let htmlBurbuja = ''
+    if (feedback && feedback !== '¡Listo para comenzar!' && parseInt(puntos) > 0) {
+      htmlBurbuja += `<span class="feedback-chip">Feedback: ${feedback} (${puntos}/5)</span><br>`
+    }
+    htmlBurbuja += `<strong>Pregunta ${preguntaActual}:</strong> ${pregunta}`
+    agregarBurbuja('ia', htmlBurbuja)
+
+    leer(`Pregunta ${preguntaActual}. ${pregunta}`)
+
+    const envBtn = document.getElementById('btn-enviar')
+    const inp    = document.getElementById('inp-respuesta')
+    envBtn.disabled = false
+    inp.disabled = false
+    inp.focus()
+  }
+
+  async function enviarRespuesta() {
+    const inp = document.getElementById('inp-respuesta')
+    const texto = inp.value.trim()
+    if (!texto) return
+
+    const envBtn = document.getElementById('btn-enviar')
+    envBtn.disabled = true
+    inp.disabled = true
+    inp.value = ''
+    window.speechSynthesis?.cancel()
+
+    agregarBurbuja('usuario', texto)
+    mensajes.push({ role: 'user', content: texto })
+
+    const tipo      = document.getElementById('c-tipo').value
+    const dificultad = document.getElementById('c-dificultad').value
+    const nombre    = document.getElementById('c-nombre').value || 'el candidato'
+    const carrera   = document.getElementById('c-carrera').value || 'no especificada'
+    const oportunidad = document.getElementById('c-oportunidad').value
+    const objetivo  = document.getElementById('c-objetivo').value
+
+    const sistemaPrompt = `Eres Becanda IA, un entrevistador experto para ${tipo} en instituciones reconocidas. Estás entrevistando a ${nombre}, estudiante de ${carrera}${oportunidad ? ` para ${oportunidad}` : ''}.
+${objetivo ? `Su objetivo: ${objetivo}` : ''}
+Dificultad: ${dificultad}. Esta es la pregunta ${preguntaActual} de ${TOTAL_PREGUNTAS}.
+
+FORMATO OBLIGATORIO:
+FEEDBACK: [retroalimentación específica de esta respuesta, 1-2 oraciones]
+PUNTOS: [1-5]
+PREGUNTA: [siguiente pregunta — o "FIN" si ya completaste ${TOTAL_PREGUNTAS} preguntas]
+REPORTE: [SOLO si PREGUNTA es FIN: puntaje total, fortalezas, áreas de mejora, recomendación]`
+
+    const burl = agregarBurbuja('cargando', '<span class="spinner-dot">...</span>')
+    try {
+      const respuesta = await llamarClaude(sistemaPrompt, mensajes)
+      burl.remove()
+      procesarRespuestaIA(respuesta)
+    } catch (err) {
+      burl.remove()
+      agregarBurbuja('ia', '⚠️ Error: ' + err.message)
+      envBtn.disabled = false
+      inp.disabled = false
+    }
+  }
+
+  function extraer(texto, campo) {
+    const regex = new RegExp(campo + ':\\s*(.+?)(?=\\n[A-ZÁÉÍÓÚÑ]+:|$)', 's')
+    const match = texto.match(regex)
+    return match ? match[1].trim() : ''
+  }
+
+  async function llamarClaude(system, messages) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': localStorage.getItem(STORAGE_KEY),
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        system,
+        messages
+      })
+    })
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}))
+      throw new Error(e.error?.message || `HTTP ${res.status}`)
+    }
+    const d = await res.json()
+    return d.content[0].text
+  }
+
+  function toggleMic() {
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SpeechRec) {
+      alert('El reconocimiento de voz solo funciona en Chrome o Edge.\nEscribe tu respuesta en el cuadro de texto.')
+      return
+    }
+
+    if (escuchando) {
+      recognition?.stop()
+      return
+    }
+
+    recognition = new SpeechRec()
+    recognition.lang = 'es-MX'
+    recognition.continuous = false
+    recognition.interimResults = false
+
+    const btn = document.getElementById('btn-mic')
+    btn.classList.add('escuchando')
+    btn.textContent = '⏹'
+    escuchando = true
+
+    recognition.onresult = e => {
+      document.getElementById('inp-respuesta').value = e.results[0][0].transcript
+    }
+    recognition.onend = () => {
+      btn.classList.remove('escuchando')
+      btn.textContent = '🎤'
+      escuchando = false
+    }
+    recognition.onerror = () => {
+      btn.classList.remove('escuchando')
+      btn.textContent = '🎤'
+      escuchando = false
+    }
+    recognition.start()
+  }
+</script>
+</body>
+</html>
