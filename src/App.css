@@ -1,0 +1,167 @@
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.pantalla {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e0f2fe, #f8fafc);
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.hero,
+.tarjeta {
+  width: 90%;
+  max-width: 560px;
+  background: white;
+  padding: 42px;
+  border-radius: 28px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+  text-align: center;
+}
+
+.titulo {
+  font-size: 64px;
+  color: #0284c7;
+  margin: 0 0 16px;
+  font-weight: 800;
+}
+
+.subtitulo {
+  font-size: 20px;
+  color: #475569;
+  line-height: 1.5;
+  margin-bottom: 28px;
+}
+
+.titulo-form {
+  font-size: 36px;
+  color: #0284c7;
+  margin: 0 0 8px;
+}
+
+.subtitulo-form {
+  color: #64748b;
+  margin-bottom: 24px;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.formulario input,
+.formulario select,
+.formulario textarea {
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid #cbd5e1;
+  font-size: 16px;
+  background: #f8fafc;
+}
+
+.formulario textarea {
+  min-height: 90px;
+  resize: none;
+}
+
+.boton {
+  margin-top: 8px;
+  background: #0284c7;
+  color: white;
+  padding: 14px 26px;
+  border-radius: 16px;
+  border: none;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.boton:hover {
+  background: #0369a1;
+}
+
+.boton-secundario {
+  margin-top: 12px;
+  background: white;
+  color: #0284c7;
+  padding: 12px 24px;
+  border-radius: 16px;
+  border: 1px solid #0284c7;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.recursos {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 24px 0;
+  text-align: left;
+}
+
+.recurso {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 18px;
+  padding: 18px;
+  margin-bottom: 24px;
+}
+
+.recurso h3 {
+  margin: 0 0 8px;
+  color: #0284c7;
+}
+
+.recurso p {
+  margin: 0;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.resultados {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.card {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 18px;
+  padding: 18px;
+  text-align: left;
+}
+
+.card h3 {
+  margin: 0 0 10px;
+  color: #0284c7;
+}
+
+.card p {
+  margin: 6px 0;
+  color: #475569;
+}
+
+.card a {
+  display: inline-block;
+  margin-top: 10px;
+  color: #0284c7;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.recurso a {
+  display: inline-block;
+  margin-top: 12px;
+  color: #10b981;
+  font-weight: bold;
+  text-decoration: none;
+}
